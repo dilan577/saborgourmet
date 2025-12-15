@@ -49,12 +49,42 @@ router.get(
    👉 Confirmar | Atendida | No show
 ====================================================== */
 
+// 🔐 CAMBIAR ESTADO RESERVA (ADMIN / MESERO)
 router.post(
-  '/:id/estado',
+  '/:id/confirmar',
   auth.estaAutenticado,
   auth.tieneRol('admin', 'mesero'),
-  reservasController.cambiarEstado
+  reservasController.confirmarReserva
 );
+
+router.post(
+  '/:id/cancelar',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero'),
+  reservasController.cancelarReserva
+);
+
+router.post(
+  '/:id/en-curso',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero'),
+  reservasController.marcarEnCurso
+);
+
+router.post(
+  '/:id/completar',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero'),
+  reservasController.completarReserva
+);
+
+router.post(
+  '/:id/no-show',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero'),
+  reservasController.marcarNoShow
+);
+
 
 
 module.exports = router;

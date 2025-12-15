@@ -5,7 +5,6 @@ const { Op } = require('sequelize');
    VALIDAR RESERVA
 ====================================================== */
 const validarReserva = async ({ fecha, hora, numeroPersonas, mesaId }) => {
-  // 📅 + ⏰ FECHA Y HORA COMPLETAS (NO PASADAS)
   const fechaHoraReserva = new Date(`${fecha}T${hora}:00`);
   const ahora = new Date();
 
@@ -13,11 +12,9 @@ const validarReserva = async ({ fecha, hora, numeroPersonas, mesaId }) => {
     throw new Error('La fecha y hora seleccionadas ya pasaron');
   }
 
-  // 📅 Día de la semana
   const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   const diaSemana = dias[fechaHoraReserva.getDay()];
 
-  // ⏰ Horario válido del restaurante
   const horario = await Horario.findOne({
     where: {
       diaSemana,
@@ -31,18 +28,15 @@ const validarReserva = async ({ fecha, hora, numeroPersonas, mesaId }) => {
     throw new Error('Hora fuera del horario del restaurante');
   }
 
-  // 🪑 Mesa válida
   const mesa = await Mesa.findByPk(mesaId);
   if (!mesa || !mesa.activa) {
     throw new Error('Mesa no válida');
   }
 
-  // 👥 Capacidad
   if (parseInt(numeroPersonas) > mesa.capacidad) {
     throw new Error(`La mesa solo permite ${mesa.capacidad} personas`);
   }
 
-  // 🚫 MISMA MESA + MISMA FECHA + MISMA HORA
   const existe = await Reserva.findOne({
     where: {
       mesaId,
@@ -55,12 +49,10 @@ const validarReserva = async ({ fecha, hora, numeroPersonas, mesaId }) => {
   if (existe) {
     throw new Error('La mesa ya está reservada para esa fecha y hora');
   }
-
-  return true;
 };
 
 /* ======================================================
-   LISTAR RESERVAS (ADMIN / MESERO)
+   LISTAR RESERVAS
 ====================================================== */
 const listarReservas = async (req, res, next) => {
   try {
@@ -82,7 +74,7 @@ const listarReservas = async (req, res, next) => {
 };
 
 /* ======================================================
-   FORMULARIO CREAR (PRIVADO)
+   FORMULARIO CREAR
 ====================================================== */
 const mostrarFormularioCrear = async (req, res, next) => {
   try {
@@ -98,37 +90,21 @@ const mostrarFormularioCrear = async (req, res, next) => {
 };
 
 /* ======================================================
-   CREAR RESERVA (PÚBLICA Y PRIVADA)
+   CREAR RESERVA
 ====================================================== */
 const crearReserva = async (req, res, next) => {
   try {
-    const {
-      fecha,
-      hora,
-      numeroPersonas,
-      mesaId,
-      notas,
-      esPublica
-    } = req.body;
-
+    const { fecha, hora, numeroPersonas, mesaId, notas, esPublica } = req.body;
     const esReservaPublica = esPublica === '1';
 
-    // 🔴 Validación básica
     if (!fecha || !hora || !numeroPersonas || !mesaId) {
       throw new Error('Todos los campos son obligatorios');
     }
 
-    // ✅ VALIDACIÓN CENTRAL
-    await validarReserva({
-      fecha,
-      hora,
-      numeroPersonas,
-      mesaId
-    });
+    await validarReserva({ fecha, hora, numeroPersonas, mesaId });
 
     let clienteId;
 
-    // 🌍 RESERVA PÚBLICA
     if (esReservaPublica) {
       let cliente = await Cliente.findOne({
         where: { email: 'publico@saborgourmet.com' }
@@ -144,25 +120,15 @@ const crearReserva = async (req, res, next) => {
       }
 
       clienteId = cliente.id;
-    }
-    // 🔐 RESERVA PRIVADA (ADMIN / MESERO / CLIENTE)
-    else {
-      if (!req.session.usuarioId) {
-        throw new Error('Debes iniciar sesión');
-      }
-
+    } else {
       const cliente = await Cliente.findOne({
         where: { usuarioId: req.session.usuarioId }
       });
 
-      if (!cliente) {
-        throw new Error('Cliente no encontrado');
-      }
-
+      if (!cliente) throw new Error('Cliente no encontrado');
       clienteId = cliente.id;
     }
 
-    // 💾 CREAR RESERVA
     await Reserva.create({
       clienteId,
       mesaId,
@@ -173,13 +139,11 @@ const crearReserva = async (req, res, next) => {
       estado: 'pendiente'
     });
 
-    // 🎯 RESPUESTA
     if (esReservaPublica) {
       return res.redirect('/?ok=Reserva creada correctamente');
     }
 
     res.redirect('/dashboard');
-
   } catch (error) {
     if (req.body.esPublica === '1') {
       return res.redirect(`/?error=${encodeURIComponent(error.message)}`);
@@ -216,43 +180,91 @@ const verReserva = async (req, res, next) => {
   }
 };
 
-const cambiarEstado = async (req, res) => {
+/* ======================================================
+   CAMBIOS DE ESTADO (ADMIN / MESERO)
+====================================================== */
+const confirmarReserva = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { estado } = req.body;
+    const reserva = await Reserva.findByPk(req.params.id);
+    if (!reserva) return res.status(404).json({ success: false });
 
-    // Estados permitidos
-    const estadosValidos = ['confirmada', 'atendida', 'cancelada', 'no_show'];
-
-    if (!estadosValidos.includes(estado)) {
-      return res.status(400).json({ error: 'Estado no válido' });
-    }
-
-    const reserva = await Reserva.findByPk(id);
-
-    if (!reserva) {
-      return res.status(404).json({ error: 'Reserva no encontrada' });
-    }
-
-    reserva.estado = estado;
+    reserva.estado = 'confirmada';
     await reserva.save();
 
-    return res.json({ ok: true });
-
+    res.json({ success: true });
   } catch (error) {
-    console.error('❌ Error cambiarEstado:', error);
-    return res.status(500).json({ error: 'Error al cambiar estado' });
+    res.status(500).json({ success: false });
   }
 };
 
+const cancelarReserva = async (req, res) => {
+  try {
+    const reserva = await Reserva.findByPk(req.params.id);
+    if (!reserva) return res.status(404).json({ success: false });
+
+    reserva.estado = 'cancelada';
+    reserva.motivoCancelacion = req.body.motivoCancelacion || null;
+    await reserva.save();
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+};
+
+const marcarEnCurso = async (req, res) => {
+  try {
+    const reserva = await Reserva.findByPk(req.params.id);
+    if (!reserva) return res.status(404).json({ success: false });
+
+    reserva.estado = 'en_curso';
+    await reserva.save();
+
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ success: false });
+  }
+};
+
+const completarReserva = async (req, res) => {
+  try {
+    const reserva = await Reserva.findByPk(req.params.id);
+    if (!reserva) return res.status(404).json({ success: false });
+
+    reserva.estado = 'completada';
+    await reserva.save();
+
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ success: false });
+  }
+};
+
+const marcarNoShow = async (req, res) => {
+  try {
+    const reserva = await Reserva.findByPk(req.params.id);
+    if (!reserva) return res.status(404).json({ success: false });
+
+    reserva.estado = 'no_show';
+    await reserva.save();
+
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ success: false });
+  }
+};
 
 /* ======================================================
-   EXPORTS
+   EXPORTS (ÚNICO Y CORRECTO)
 ====================================================== */
 module.exports = {
+  crearReserva,
   listarReservas,
   mostrarFormularioCrear,
-  crearReserva,
-  cambiarEstado,
-  verReserva
+  verReserva,
+  confirmarReserva,
+  cancelarReserva,
+  marcarEnCurso,
+  completarReserva,
+  marcarNoShow
 };
