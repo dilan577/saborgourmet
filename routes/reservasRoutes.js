@@ -4,6 +4,9 @@ const router = express.Router();
 const reservasController = require('../controllers/reservasController');
 const { estaAutenticado, tieneRol } = require('../middleware/auth');
 
+// 🧪 DEBUG (BORRAR DESPUÉS SI QUIERES)
+console.log('listarReservas:', typeof reservasController.listarReservas);
+
 // ===============================
 // LISTAR RESERVAS (ADMIN / MESERO)
 // ===============================
@@ -15,7 +18,7 @@ router.get(
 );
 
 // ===============================
-// CREAR RESERVA (ADMIN / MESERO / CLIENTE)
+// CREAR RESERVA
 // ===============================
 router.get(
   '/crear',
@@ -33,13 +36,11 @@ router.post(
 
 // ===============================
 // VER RESERVA
-// ADMIN / MESERO: todas
-// CLIENTE: solo la suya (ya validado en controller)
 // ===============================
 router.get(
   '/:id',
   estaAutenticado,
-  tieneRol('admin', 'mesero', 'cliente'),
+  tieneRol('admin', 'mesero'),
   reservasController.verReserva
 );
 
