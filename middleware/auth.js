@@ -1,23 +1,45 @@
+const { Usuario } = require('../models');
+
 // ===============================
-// VERIFICAR AUTENTICACIÓN
+// VERIFICAR AUTENTICACIÓN + USUARIO ACTIVO
 // ===============================
-const estaAutenticado = (req, res, next) => {
-  if (req.session && req.session.usuarioId) {
-    return next();
+const estaAutenticado = async (req, res, next) => {
+  if (!req.session || !req.session.usuarioId) {
+    return res.redirect('/auth/login');
   }
-  return res.redirect('/auth/login');
+
+  // 🔒 VALIDAR QUE EL USUARIO SIGA ACTIVO
+  const usuario = await Usuario.findByPk(req.session.usuarioId);
+
+  if (!usuario || !usuario.activo) {
+    req.session.destroy(() => {
+      return res.redirect('/auth/login');
+    });
+    return;
+  }
+
+  next();
 };
 
 // ===============================
 // MIDDLEWARE GENÉRICO POR ROLES
 // ===============================
 const tieneRol = (...roles) => {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (!req.session || !req.session.usuarioId) {
       return res.redirect('/auth/login');
     }
 
-    if (!roles.includes(req.session.rol)) {
+    const usuario = await Usuario.findByPk(req.session.usuarioId);
+
+    if (!usuario || !usuario.activo) {
+      req.session.destroy(() => {
+        return res.redirect('/auth/login');
+      });
+      return;
+    }
+
+    if (!roles.includes(usuario.rol)) {
       return res.status(403).render('error', {
         titulo: '403',
         mensaje: 'No tienes permisos para acceder a esta página'
@@ -64,7 +86,6 @@ const noAutenticado = (req, res, next) => {
   }
   next();
 };
-
 
 module.exports = {
   estaAutenticado,

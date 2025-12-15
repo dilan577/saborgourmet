@@ -32,29 +32,14 @@ router.post(
 );
 
 // ===============================
-// EDITAR RESERVA (SOLO ADMIN)
-// ===============================
-router.get(
-  '/:id/editar',
-  estaAutenticado,
-  tieneRol('admin', 'mesero'),
-  reservasController.mostrarFormularioEditar
-);
-
-router.post(
-  '/:id/editar',
-  estaAutenticado,
-  tieneRol('admin', 'mesero'),
-  reservasController.actualizarReserva
-);
-
-// ===============================
-// VER RESERVA (ADMIN / MESERO)
+// VER RESERVA
+// ADMIN / MESERO: todas
+// CLIENTE: solo la suya (ya validado en controller)
 // ===============================
 router.get(
   '/:id',
   estaAutenticado,
-  tieneRol('admin', 'mesero'),
+  tieneRol('admin', 'mesero', 'cliente'),
   reservasController.verReserva
 );
 

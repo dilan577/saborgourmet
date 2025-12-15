@@ -1,17 +1,17 @@
 require('dotenv').config();
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
 
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-require('dotenv').config();
 
 const { sequelize } = require('./models');
 const { agregarUsuarioAVista } = require('./middleware/auth');
 
-// Importar rutas
+// ===============================
+// IMPORTAR RUTAS
+// ===============================
+const indexRoutes = require('./routes/indexRoutes');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const mesasRoutes = require('./routes/mesasRoutes');
@@ -23,59 +23,55 @@ const usuariosRoutes = require('./routes/usuariosRoutes');
 const clienteDashboardRoutes = require('./routes/clienteDashboardRoutes');
 const clienteReservasRoutes = require('./routes/clienteReservasRoutes');
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de Pug
+// ===============================
+// CONFIGURACIÓN DE VISTAS
+// ===============================
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
+// ===============================
+// MIDDLEWARES
+// ===============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuración de sesiones
+// ===============================
+// SESIONES
+// ===============================
 app.use(session({
   secret: process.env.SESSION_SECRET || 'saborgourmet_secret_key',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24, // 24 horas
+    maxAge: 1000 * 60 * 60 * 24,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
   }
 }));
 
-// Middleware para agregar usuario a las vistas
+// Usuario disponible en vistas
 app.use(agregarUsuarioAVista);
 
-// Rutas
-app.get('/', (req, res) => {
-  if (req.session.usuarioId) {
-    return res.redirect('/dashboard');
-  }
-  res.redirect('/auth/login');
-});
+// ===============================
+// RUTAS (ORDEN CORRECTO)
+// ===============================
 
+// 👉 INDEX PÚBLICO (PRIMERO)
+app.use('/', indexRoutes);
 
-
-console.log({
-  auth: typeof authRoutes,
-  dashboard: typeof dashboardRoutes,
-  mesas: typeof mesasRoutes,
-  horarios: typeof horariosRoutes,
-  clientes: typeof clientesRoutes,
-  reservas: typeof reservasRoutes
-});
-
-
-
-
+// Autenticación
 app.use('/auth', authRoutes);
+
+// Dashboards
 app.use('/dashboard', dashboardRoutes);
+app.use('/cliente', clienteDashboardRoutes);
+
+// Módulos
 app.use('/mesas', mesasRoutes);
 app.use('/horarios', horariosRoutes);
 app.use('/clientes', clientesRoutes);
@@ -84,47 +80,50 @@ app.use('/admin', adminRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/reservas-cliente', clienteReservasRoutes);
 
-
-// Manejo de errores 404
+// ===============================
+// 404
+// ===============================
 app.use((req, res) => {
   res.status(404).render('error', {
-    mensaje: 'Página no encontrada',
-    error: { status: 404 }
+    titulo: '404',
+    mensaje: 'Página no encontrada'
   });
 });
 
-// Manejo de errores generales
+// ===============================
+// ERRORES GENERALES
+// ===============================
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('❌ Error:', err);
   res.status(err.status || 500).render('error', {
+    titulo: 'Error',
     mensaje: err.message || 'Error interno del servidor',
     error: process.env.NODE_ENV === 'development' ? err : {}
   });
 });
 
-// Iniciar servidor
+// ===============================
+// INICIAR SERVIDOR
+// ===============================
 const iniciarServidor = async () => {
   try {
-    // Verificar conexión a la base de datos
     await sequelize.authenticate();
-    console.log('✅ Conexión a la base de datos establecida correctamente.');
-    
-    // Sincronizar modelos (solo en desarrollo)
+    console.log('✅ Conectado a la base de datos');
+
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: false });
-      console.log('✅ Modelos sincronizados con la base de datos.');
     }
-    
-    // Iniciar servidor
+
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-      console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🚀 Servidor en http://localhost:${PORT}`);
     });
+
   } catch (error) {
-    console.error('❌ Error al iniciar el servidor:', error);
+    console.error('❌ Error al iniciar:', error);
     process.exit(1);
   }
 };
 
 iniciarServidor();
+
 module.exports = app;
