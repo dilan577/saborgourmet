@@ -2,46 +2,59 @@ const express = require('express');
 const router = express.Router();
 
 const reservasController = require('../controllers/reservasController');
-const { estaAutenticado, tieneRol } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
-// 🧪 DEBUG (BORRAR DESPUÉS SI QUIERES)
-console.log('listarReservas:', typeof reservasController.listarReservas);
-
-// ===============================
-// LISTAR RESERVAS (ADMIN / MESERO)
-// ===============================
-router.get(
-  '/',
-  estaAutenticado,
-  tieneRol('admin', 'mesero'),
-  reservasController.listarReservas
-);
-
-// ===============================
-// CREAR RESERVA
-// ===============================
-router.get(
-  '/crear',
-  estaAutenticado,
-  tieneRol('admin', 'mesero', 'cliente'),
-  reservasController.mostrarFormularioCrear
-);
-
+/* ======================================================
+   🔓 RESERVA PÚBLICA (SIN LOGIN)
+   👉 Desde el index.pug
+====================================================== */
 router.post(
   '/crear',
-  estaAutenticado,
-  tieneRol('admin', 'mesero', 'cliente'),
   reservasController.crearReserva
 );
 
-// ===============================
-// VER RESERVA
-// ===============================
+/* ======================================================
+   🔐 LISTAR RESERVAS (ADMIN / MESERO)
+====================================================== */
+router.get(
+  '/',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero'),
+  reservasController.listarReservas
+);
+
+/* ======================================================
+   🔐 FORMULARIO CREAR (INTERNO)
+   👉 Admin / Mesero / Cliente logueado
+====================================================== */
+router.get(
+  '/crear',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero', 'cliente'),
+  reservasController.mostrarFormularioCrear
+);
+
+/* ======================================================
+   🔐 VER RESERVA
+====================================================== */
 router.get(
   '/:id',
-  estaAutenticado,
-  tieneRol('admin', 'mesero'),
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero', 'cliente'),
   reservasController.verReserva
 );
+
+/* ======================================================
+   🔐 CAMBIAR ESTADO (ADMIN / MESERO)
+   👉 Confirmar | Atendida | No show
+====================================================== */
+
+router.post(
+  '/:id/estado',
+  auth.estaAutenticado,
+  auth.tieneRol('admin', 'mesero'),
+  reservasController.cambiarEstado
+);
+
 
 module.exports = router;

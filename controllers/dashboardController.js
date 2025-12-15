@@ -12,25 +12,31 @@ exports.index = async (req, res, next) => {
     const hoy = new Date().toISOString().slice(0, 10);
 
     /* ======================================================
-       DASHBOARD CLIENTE (INNER JOIN REAL ✔)
+       DASHBOARD CLIENTE
     ====================================================== */
     if (rol === 'cliente') {
 
+      // 🔑 Obtener cliente real
+      const cliente = await Cliente.findOne({
+        where: { usuarioId }
+      });
+
+      if (!cliente) {
+        return res.redirect('/auth/login');
+      }
+
       const misReservas = await Reserva.findAll({
-        where: { usuarioId }, // 🔑 RELACIÓN REAL
+        where: { clienteId: cliente.id },
         include: [
-          { model: Cliente, as: 'cliente' },
-          { model: Mesa, as: 'mesa', required: false }
+          { model: Mesa, as: 'mesa' }
         ],
         order: [['fecha', 'ASC'], ['hora', 'ASC']]
       });
 
-      const proximaReserva = misReservas.find(
-        r => r.fecha >= hoy
-      ) || null;
+      const proximaReserva =
+        misReservas.find(r => r.fecha >= hoy) || null;
 
       return res.render('clientes/dashboard', {
-
         titulo: 'Mi Dashboard',
         misReservas,
         totalReservas: misReservas.length,
@@ -39,7 +45,7 @@ exports.index = async (req, res, next) => {
     }
 
     /* ======================================================
-       ADMIN → REDIRIGE (NO SE RENDERIZA AQUÍ)
+       ADMIN → REDIRECCIÓN
     ====================================================== */
     if (rol === 'admin') {
       return res.redirect('/admin');
@@ -48,55 +54,60 @@ exports.index = async (req, res, next) => {
     /* ======================================================
        DASHBOARD MESERO
     ====================================================== */
+    if (rol === 'mesero') {
 
-    const reservasHoy = await Reserva.findAll({
-      where: { fecha: hoy },
-      include: [
-        { model: Cliente, as: 'cliente' },
-        { model: Mesa, as: 'mesa', required: false }
-      ],
-      order: [['hora', 'ASC']]
-    });
+      const reservasHoy = await Reserva.findAll({
+        where: { fecha: hoy },
+        include: [
+          { model: Cliente, as: 'cliente' },
+          { model: Mesa, as: 'mesa' }
+        ],
+        order: [['hora', 'ASC']]
+      });
 
-    const totalReservasHoy = reservasHoy.length;
-    const reservasPendientes = reservasHoy.filter(
-      r => r.estado === 'pendiente'
-    ).length;
-    const reservasConfirmadas = reservasHoy.filter(
-      r => r.estado === 'confirmada'
-    ).length;
+      const totalReservasHoy = reservasHoy.length;
+      const reservasPendientes = reservasHoy.filter(
+        r => r.estado === 'pendiente'
+      ).length;
+      const reservasConfirmadas = reservasHoy.filter(
+        r => r.estado === 'confirmada'
+      ).length;
 
-    const mesas = await Mesa.findAll();
-    const mesasDisponibles = mesas.filter(m => m.activa === true);
-    const mesasOcupadas = mesas.filter(m => m.activa === false);
-    const totalMesas = mesas.length;
+      const mesas = await Mesa.findAll();
+      const totalMesas = mesas.length;
 
-    const ahora = new Date();
-    const horaActual = ahora.toTimeString().slice(0, 8);
-    const horaLimite = new Date(
-      ahora.getTime() + 2 * 60 * 60 * 1000
-    ).toTimeString().slice(0, 8);
+      // 🕒 Hora actual HH:MM
+      const ahora = new Date();
+      const horaActual = ahora.toTimeString().slice(0, 5);
+      const horaLimite = new Date(
+        ahora.getTime() + 2 * 60 * 60 * 1000
+      ).toTimeString().slice(0, 5);
 
-    const reservasProximas = await Reserva.findAll({
-      where: {
-        fecha: hoy,
-        hora: { [Op.between]: [horaActual, horaLimite] }
-      },
-      include: [{ model: Cliente, as: 'cliente' }],
-      order: [['hora', 'ASC']]
-    });
+      const reservasProximas = await Reserva.findAll({
+        where: {
+          fecha: hoy,
+          hora: { [Op.between]: [horaActual, horaLimite] }
+        },
+        include: [
+          { model: Cliente, as: 'cliente' },
+          { model: Mesa, as: 'mesa' }
+        ],
+        order: [['hora', 'ASC']]
+      });
 
-    return res.render('dashboard/index', {
-      titulo: 'Dashboard',
-      reservasHoy,
-      reservasProximas,
-      totalReservasHoy,
-      reservasPendientes,
-      reservasConfirmadas,
-      mesasDisponibles,
-      mesasOcupadas,
-      totalMesas
-    });
+      return res.render('dashboard/index', {
+        titulo: 'Dashboard Mesero',
+        reservasHoy,
+        reservasProximas,
+        totalReservasHoy,
+        reservasPendientes,
+        reservasConfirmadas,
+        totalMesas
+      });
+    }
+
+    // 🔐 Rol no permitido
+    return res.redirect('/auth/login');
 
   } catch (error) {
     console.error('❌ Error Dashboard:', error);

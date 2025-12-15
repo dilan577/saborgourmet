@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const auth = require('./middleware/auth');
+
 const path = require('path');
 
 const { sequelize } = require('./models');
@@ -13,11 +15,11 @@ const { agregarUsuarioAVista } = require('./middleware/auth');
 // ===============================
 const indexRoutes = require('./routes/indexRoutes');
 const authRoutes = require('./routes/authRoutes');
+const reservasRoutes = require('./routes/reservasRoutes');
+const horariosRoutes = require('./routes/horariosRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const mesasRoutes = require('./routes/mesasRoutes');
-const horariosRoutes = require('./routes/horariosRoutes');
 const clientesRoutes = require('./routes/clientesRoutes');
-const reservasRoutes = require('./routes/reservasRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const usuariosRoutes = require('./routes/usuariosRoutes');
 const clienteDashboardRoutes = require('./routes/clienteDashboardRoutes');
@@ -33,11 +35,13 @@ app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
 // ===============================
-// MIDDLEWARES
+// MIDDLEWARES BASE
 // ===============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ===============================
@@ -50,7 +54,7 @@ app.use(session({
   cookie: {
     maxAge: 1000 * 60 * 60 * 24,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
+    secure: false // ⚠️ mantener false en local
   }
 }));
 
@@ -58,30 +62,33 @@ app.use(session({
 app.use(agregarUsuarioAVista);
 
 // ===============================
-// RUTAS (ORDEN CORRECTO)
+// RUTAS (ORDEN CRÍTICO)
 // ===============================
 
-// 👉 INDEX PÚBLICO (PRIMERO)
+// ✅ INDEX PÚBLICO
 app.use('/', indexRoutes);
 
 // Autenticación
 app.use('/auth', authRoutes);
 
-// Dashboards
-app.use('/dashboard', dashboardRoutes);
-app.use('/cliente', clienteDashboardRoutes);
+// Dashboards (PROTEGIDOS)
+app.use('/dashboard', auth.estaAutenticado, dashboardRoutes);
+app.use('/cliente', auth.estaAutenticado, clienteDashboardRoutes);
 
 // Módulos
-app.use('/mesas', mesasRoutes);
-app.use('/horarios', horariosRoutes);
-app.use('/clientes', clientesRoutes);
 app.use('/reservas', reservasRoutes);
-app.use('/admin', adminRoutes);
-app.use('/usuarios', usuariosRoutes);
-app.use('/reservas-cliente', clienteReservasRoutes);
+app.use('/horarios', auth.estaAutenticado, horariosRoutes);
+app.use('/mesas', auth.estaAutenticado, mesasRoutes);
+app.use('/clientes', auth.estaAutenticado, clientesRoutes);
+
+// Admin
+app.use('/admin', auth.estaAutenticado, auth.tieneRol('admin'), adminRoutes);
+app.use('/usuarios', auth.estaAutenticado, auth.tieneRol('admin'), usuariosRoutes);
+app.use('/reservas-cliente', auth.estaAutenticado, clienteReservasRoutes);
+
 
 // ===============================
-// 404
+// 404 (SOLO SI NO ENTRA A NADA)
 // ===============================
 app.use((req, res) => {
   res.status(404).render('error', {
@@ -95,10 +102,9 @@ app.use((req, res) => {
 // ===============================
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err);
-  res.status(err.status || 500).render('error', {
+  res.status(500).render('error', {
     titulo: 'Error',
-    mensaje: err.message || 'Error interno del servidor',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    mensaje: err.message || 'Error interno del servidor'
   });
 });
 
@@ -109,10 +115,6 @@ const iniciarServidor = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Conectado a la base de datos');
-
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false });
-    }
 
     app.listen(PORT, () => {
       console.log(`🚀 Servidor en http://localhost:${PORT}`);
