@@ -1,4 +1,19 @@
-const { Reserva, Mesa, Cliente, Usuario } = require('../models');
+const { Reserva, Mesa, Cliente, Usuario, Horario } = require('../models');
+const { Op } = require('sequelize');
+
+/* ======================================================
+   HELPERS
+====================================================== */
+const obtenerDiaSemana = (fecha) => {
+  const dias = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  return dias[new Date(fecha).getDay()];
+};
+
+const esFechaPasada = (fecha) => {
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  return new Date(fecha) < hoy;
+};
 
 /* ======================================================
    LISTAR RESERVAS (ADMIN / MESERO)
@@ -13,10 +28,7 @@ const listarReservas = async (req, res, next) => {
       order: [['fecha', 'ASC'], ['hora', 'ASC']]
     });
 
-    res.render('reservas/index', {
-      titulo: 'Reservas',
-      reservas
-    });
+    res.render('reservas/index', { titulo: 'Reservas', reservas });
   } catch (error) {
     next(error);
   }
@@ -28,21 +40,14 @@ const listarReservas = async (req, res, next) => {
 const mostrarFormularioCrear = async (req, res, next) => {
   try {
     const { rol, usuarioId } = req.session;
-
     const mesas = await Mesa.findAll({ where: { activa: true } });
 
-    /* ======================
-       CLIENTE
-    ====================== */
     if (rol === 'cliente') {
-      const cliente = await Cliente.findOne({
-        where: { usuarioId }
-      });
-
-      if (!cliente) {
-        return res.status(404).render('error', {
-          titulo: 'Error',
-          mensaje: 'Cliente no encontrado'
+      const cliente = await Cliente.findOne({ where: { usuarioId } });
+      if (!cliente || cliente.bloqueado) {
+        return res.status(403).render('error', {
+          titulo: 'Acceso denegado',
+          mensaje: 'Cliente bloqueado o no válido'
         });
       }
 
@@ -54,12 +59,9 @@ const mostrarFormularioCrear = async (req, res, next) => {
       });
     }
 
-    /* ======================
-       ADMIN / MESERO
-    ====================== */
     const clientes = await Cliente.findAll({
       where: { bloqueado: false },
-      order: [['nombre', 'ASC']]
+      order: [['nombre','ASC']]
     });
 
     res.render('reservas/crear', {
@@ -75,57 +77,84 @@ const mostrarFormularioCrear = async (req, res, next) => {
 };
 
 /* ======================================================
-   CREAR RESERVA
+   CREAR RESERVA (VALIDACIONES COMPLETAS)
 ====================================================== */
 const crearReserva = async (req, res, next) => {
   try {
     const { rol, usuarioId } = req.session;
+    const { fecha, hora, numeroPersonas, mesaId, notas } = req.body;
+
+    /* ❌ FECHAS PASADAS */
+    if (esFechaPasada(fecha)) {
+      return res.status(400).render('error', {
+        titulo: 'Error',
+        mensaje: 'No se pueden crear reservas en fechas pasadas'
+      });
+    }
+
+    /* ❌ VALIDAR HORARIO */
+    const diaSemana = obtenerDiaSemana(fecha);
+    const horarioValido = await Horario.findOne({
+      where: {
+        diaSemana,
+        activo: true,
+        horaInicio: { [Op.lte]: hora },
+        horaFin: { [Op.gt]: hora }
+      }
+    });
+
+    if (!horarioValido) {
+      return res.status(400).render('error', {
+        titulo: 'Error',
+        mensaje: 'Hora fuera del horario del restaurante'
+      });
+    }
+
+    /* ❌ MESA OCUPADA */
+    if (mesaId) {
+      const existe = await Reserva.findOne({
+        where: {
+          mesaId,
+          fecha,
+          hora,
+          estado: { [Op.in]: ['pendiente','confirmada','en_curso'] }
+        }
+      });
+
+      if (existe) {
+        return res.status(400).render('error', {
+          titulo: 'Error',
+          mensaje: 'La mesa ya está reservada en ese horario'
+        });
+      }
+    }
 
     const data = {
-      fecha: req.body.fecha,
-      hora: req.body.hora,
-      numeroPersonas: req.body.numeroPersonas,
-      mesaId: req.body.mesaId || null,
-      notas: req.body.notas || null,
+      fecha,
+      hora,
+      numeroPersonas,
+      mesaId: mesaId || null,
+      notas: notas || null,
       estado: 'pendiente'
     };
 
-    /* ======================
-       CLIENTE
-    ====================== */
+    /* CLIENTE */
     if (rol === 'cliente') {
-      const cliente = await Cliente.findOne({
-        where: { usuarioId }
-      });
-
-      if (!cliente) {
-        return res.status(404).render('error', {
+      const cliente = await Cliente.findOne({ where: { usuarioId } });
+      if (!cliente || cliente.bloqueado) {
+        return res.status(403).render('error', {
           titulo: 'Error',
-          mensaje: 'Cliente no encontrado'
+          mensaje: 'Cliente bloqueado o inválido'
         });
       }
-
       data.clienteId = cliente.id;
     } else {
       data.clienteId = req.body.clienteId;
     }
 
     await Reserva.create(data);
-
     res.redirect('/dashboard');
 
-  } catch (error) {
-    next(error);
-  }
-};
-
-/* ======================================================
-   MESAS DISPONIBLES (AJAX)
-====================================================== */
-const obtenerMesasDisponibles = async (req, res, next) => {
-  try {
-    const mesas = await Mesa.findAll({ where: { activa: true } });
-    res.json(mesas);
   } catch (error) {
     next(error);
   }
@@ -150,7 +179,6 @@ const verReserva = async (req, res, next) => {
       });
     }
 
-    // 🔐 Cliente solo puede ver SU reserva
     if (req.session.rol === 'cliente') {
       const cliente = await Cliente.findOne({
         where: { usuarioId: req.session.usuarioId }
@@ -164,77 +192,57 @@ const verReserva = async (req, res, next) => {
       }
     }
 
-    res.render('reservas/ver', {
-      titulo: 'Reserva',
-      reserva
-    });
+    res.render('reservas/ver', { titulo: 'Reserva', reserva });
   } catch (error) {
     next(error);
   }
 };
 
 /* ======================================================
-   EDITAR / ACTUALIZAR (ADMIN)
+   CONTROL DE ESTADOS (FLUJO VÁLIDO)
 ====================================================== */
-const mostrarFormularioEditar = async (req, res, next) => {
-  try {
-    const reserva = await Reserva.findByPk(req.params.id);
-    const mesas = await Mesa.findAll({ where: { activa: true } });
+const cambiarEstado = async (id, estadoActual, nuevoEstado) => {
+  const flujos = {
+    pendiente: ['confirmada','cancelada'],
+    confirmada: ['en_curso','no_show','cancelada'],
+    en_curso: ['completada'],
+  };
+  return flujos[estadoActual]?.includes(nuevoEstado);
+};
 
-    if (!reserva) {
-      return res.redirect('/reservas');
-    }
-
-    res.render('reservas/editar', {
-      titulo: 'Editar Reserva',
-      reserva,
-      mesas
-    });
-  } catch (error) {
-    next(error);
+const actualizarEstado = async (req, res, nuevoEstado, extra = {}) => {
+  const reserva = await Reserva.findByPk(req.params.id);
+  if (!reserva || !cambiarEstado(reserva.id, reserva.estado, nuevoEstado)) {
+    return res.status(400).json({ success: false });
   }
-};
 
-const actualizarReserva = async (req, res, next) => {
-  try {
-    const reserva = await Reserva.findByPk(req.params.id);
-    if (!reserva) return res.redirect('/reservas');
-
-    await reserva.update(req.body);
-    res.redirect(`/reservas/${reserva.id}`);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/* ======================================================
-   ESTADOS (AJAX)
-====================================================== */
-const confirmarReserva = async (req, res) => {
-  await Reserva.update({ estado: 'confirmada' }, { where: { id: req.params.id } });
+  await reserva.update({ estado: nuevoEstado, ...extra });
   res.json({ success: true });
 };
 
-const marcarEnCurso = async (req, res) => {
-  await Reserva.update({ estado: 'en_curso' }, { where: { id: req.params.id } });
-  res.json({ success: true });
-};
+const confirmarReserva = (req, res) =>
+  actualizarEstado(req, res, 'confirmada');
 
-const completarReserva = async (req, res) => {
-  await Reserva.update({ estado: 'completada' }, { where: { id: req.params.id } });
-  res.json({ success: true });
-};
+const marcarEnCurso = (req, res) =>
+  actualizarEstado(req, res, 'en_curso');
 
-const cancelarReserva = async (req, res) => {
-  await Reserva.update(
-    { estado: 'cancelada', motivoCancelacion: req.body.motivo || null },
-    { where: { id: req.params.id } }
-  );
-  res.json({ success: true });
-};
+const completarReserva = (req, res) =>
+  actualizarEstado(req, res, 'completada');
+
+const cancelarReserva = (req, res) =>
+  actualizarEstado(req, res, 'cancelada', { motivoCancelacion: req.body.motivo || null });
 
 const marcarNoShow = async (req, res) => {
-  await Reserva.update({ estado: 'no_show' }, { where: { id: req.params.id } });
+  const reserva = await Reserva.findByPk(req.params.id, { include: Cliente });
+  if (!reserva) return res.json({ success: false });
+
+  await reserva.update({ estado: 'no_show' });
+  await reserva.cliente.increment('noShows');
+
+  if (reserva.cliente.noShows + 1 >= 3) {
+    await reserva.cliente.update({ bloqueado: true });
+  }
+
   res.json({ success: true });
 };
 
@@ -242,10 +250,7 @@ module.exports = {
   listarReservas,
   mostrarFormularioCrear,
   crearReserva,
-  obtenerMesasDisponibles,
   verReserva,
-  mostrarFormularioEditar,
-  actualizarReserva,
   confirmarReserva,
   marcarEnCurso,
   completarReserva,
