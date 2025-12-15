@@ -1,0 +1,19 @@
+extends ../layouts/main
+
+block content
+  h1.text-3xl.font-bold Editar Usuario
+
+  .mt-6.max-w-xl.card
+    form(method="POST" action=`/usuarios/${usuario.id}/editar`)
+      .space-y-4
+        input.input-field(name="nombre" value=usuario.nombre required)
+        input.input-field(name="apellido" value=usuario.apellido required)
+        input.input-field(type="email" name="email" value=usuario.email required)
+        input.input-field(name="telefono" value=usuario.telefono)
+
+        select.input-field(name="rol")
+          option(value="admin" selected=usuario.rol==='admin') Admin
+          option(value="mesero" selected=usuario.rol==='mesero') Mesero
+          option(value="cliente" selected=usuario.rol==='cliente') Cliente
+
+        button.btn-primary(type="submit") Guardar

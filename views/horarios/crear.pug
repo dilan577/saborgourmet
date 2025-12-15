@@ -1,0 +1,45 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900= titulo
+  
+  .mt-8.max-w-2xl
+    .card
+      if error
+        .mb-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded
+          p= error
+      
+      form(action="/horarios/crear" method="POST")
+        .space-y-6
+          div
+            label.label(for="diaSemana") Día de la Semana *
+            select#diaSemana.input-field(name="diaSemana" required)
+              option(value="") Seleccione un día
+              option(value="lunes") Lunes
+              option(value="martes") Martes
+              option(value="miercoles") Miércoles
+              option(value="jueves") Jueves
+              option(value="viernes") Viernes
+              option(value="sabado") Sábado
+              option(value="domingo") Domingo
+          
+          div
+            label.label(for="horaInicio") Hora de Inicio *
+            input#horaInicio.input-field(type="time" name="horaInicio" required)
+          
+          div
+            label.label(for="horaFin") Hora de Fin *
+            input#horaFin.input-field(type="time" name="horaFin" required)
+          
+          div
+            label.label(for="intervaloReserva") Intervalo de Reserva (minutos) *
+            input#intervaloReserva.input-field(type="number" name="intervaloReserva" required value="30" min="15" max="120")
+          
+          div
+            label.label(for="duracionEstandar") Duración Estándar (minutos) *
+            input#duracionEstandar.input-field(type="number" name="duracionEstandar" required value="120" min="30" max="240")
+          
+          .flex.space-x-4
+            button.btn-primary(type="submit") Crear Horario
+            a.btn-secondary(href="/horarios") Cancelar

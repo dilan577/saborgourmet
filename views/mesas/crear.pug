@@ -1,0 +1,40 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900= titulo
+    p.mt-2.text-sm.text-gray-600 Completa el formulario para crear una nueva mesa
+  
+  .mt-8.max-w-2xl
+    .card
+      if error
+        .mb-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded
+          p= error
+      
+      form(action="/mesas/crear" method="POST")
+        .space-y-6
+          div
+            label.label(for="numero") Número de Mesa *
+            input#numero.input-field(type="text" name="numero" required placeholder="Ej: M01, T05")
+          
+          div
+            label.label(for="capacidad") Capacidad *
+            input#capacidad.input-field(type="number" name="capacidad" required min="1" max="20" placeholder="Número de personas")
+            p.mt-1.text-sm.text-gray-500 Capacidad entre 1 y 20 personas
+          
+          div
+            label.label(for="zona") Zona *
+            select#zona.input-field(name="zona" required)
+              option(value="") Seleccione una zona
+              option(value="interior") Interior
+              option(value="terraza") Terraza
+              option(value="vip") VIP
+              option(value="exterior") Exterior
+          
+          div
+            label.label(for="descripcion") Descripción
+            textarea#descripcion.input-field(name="descripcion" rows="3" placeholder="Descripción opcional de la mesa")
+          
+          .flex.space-x-4
+            button.btn-primary(type="submit") Crear Mesa
+            a.btn-secondary(href="/mesas") Cancelar

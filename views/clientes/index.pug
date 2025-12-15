@@ -1,0 +1,54 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    .flex.justify-between.items-center
+      div
+        h1.text-3xl.font-bold.text-gray-900= titulo
+        p.mt-2.text-sm.text-gray-600 Administra la base de datos de clientes
+      a.btn-primary(href="/clientes/crear") Registrar Cliente
+        a.btn-secondary(href="/admin") Volver  
+
+  
+  .mt-8.card
+    .overflow-x-auto
+      table.min-w-full.divide-y.divide-gray-200
+        thead.bg-gray-50
+          tr
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Nombre
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Email
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Teléfono
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Reservas
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase No-Shows
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Estado
+            th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Acciones
+        tbody.bg-white.divide-y.divide-gray-200
+          each cliente in clientes
+            tr
+              td.px-6.py-4.whitespace-nowrap.text-sm.font-medium.text-gray-900= `${cliente.nombre} ${cliente.apellido}`
+              td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= cliente.email
+              td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= cliente.telefono
+              td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= cliente.reservas.length
+              td.px-6.py-4.whitespace-nowrap.text-sm
+                span(class={"text-red-600 font-semibold": cliente.noShows > 2, "text-yellow-600": cliente.noShows > 0 && cliente.noShows <= 2, "text-green-600": cliente.noShows === 0})= cliente.noShows
+              td.px-6.py-4.whitespace-nowrap
+                span.badge(class={"badge-success": !cliente.bloqueado, "badge-danger": cliente.bloqueado})= cliente.bloqueado ? 'Bloqueado' : 'Activo'
+              td.px-6.py-4.whitespace-nowrap.text-sm.space-x-2
+                a.text-blue-600.hover_text-blue-900(href=`/clientes/${cliente.id}`) Ver
+                a.text-green-600.hover_text-green-900(href=`/clientes/${cliente.id}/editar`) Editar
+                button.text-yellow-600.hover_text-yellow-900(onclick=`toggleBloqueo(${cliente.id})`)= cliente.bloqueado ? 'Desbloquear' : 'Bloquear'
+  
+  script.
+    async function toggleBloqueo(id) {
+      if (!confirm('¿Cambiar el estado de bloqueo de este cliente?')) return;
+      try {
+        const response = await fetch(`/clientes/${id}/toggle-bloqueo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) window.location.reload();
+      } catch (error) {
+        alert('Error al cambiar estado');
+      }
+    }

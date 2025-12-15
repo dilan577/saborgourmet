@@ -1,0 +1,21 @@
+extends ../layouts/main
+
+block content
+  h1.text-3xl.font-bold Crear Usuario
+
+  .mt-6.max-w-xl.card
+    form(method="POST" action="/usuarios/crear")
+      .space-y-4
+        input.input-field(name="nombre" placeholder="Nombre" required)
+        input.input-field(name="apellido" placeholder="Apellido" required)
+        input.input-field(type="email" name="email" placeholder="Email" required)
+        input.input-field(name="telefono" placeholder="Teléfono")
+
+        select.input-field(name="rol")
+          option(value="admin") Admin
+          option(value="mesero") Mesero
+          option(value="cliente") Cliente
+
+        input.input-field(type="password" name="password" placeholder="Contraseña" required)
+
+        button.btn-primary(type="submit") Crear

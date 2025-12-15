@@ -1,0 +1,33 @@
+extends ../layouts/main
+
+block content
+  h1.text-3xl.font-bold.text-gray-900 Usuarios
+
+  .mt-4
+    a.btn-primary(href="/usuarios/crear") Nuevo Usuario
+    a.btn-secondary.mr-4(href="/admin") Volver
+
+
+  .mt-2.card
+    table.min-w-full.divide-y.divide-gray-200
+      thead.bg-gray-50
+        tr
+          th.px-4.py-2 Nombre
+          th.px-4.py-2 Email
+          th.px-4.py-2 Rol
+          th.px-4.py-2 Estado
+          th.px-4.py-2 Acciones
+      tbody.divide-y
+        each u in usuarios
+          tr
+            td.px-4.py-2= `${u.nombre} ${u.apellido}`
+            td.px-4.py-2= u.email
+            td.px-4.py-2= u.rol
+            td.px-4.py-2
+              span.badge(class=u.activo ? 'badge-success' : 'badge-danger')
+                = u.activo ? 'Activo' : 'Inactivo'
+            td.px-4.py-2.flex.space-x-2
+              a.text-primary-600(href=`/usuarios/${u.id}/editar`) Editar
+              form(method="POST" action=`/usuarios/${u.id}/estado`)
+                button.text-red-600(type="submit")
+                  = u.activo ? 'Desactivar' : 'Activar'

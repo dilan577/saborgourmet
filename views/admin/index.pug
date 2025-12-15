@@ -1,0 +1,60 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900 Panel de Administración
+    p.mt-2.text-sm.text-gray-600 Gestiona todo el sistema desde aquí
+
+  // ====== ACCIONES ADMIN ======
+  .mt-8.grid.grid-cols-1.sm_grid-cols-2.lg_grid-cols-4.gap-6
+    a.card.hover_bg-gray-50(href="/reservas")
+      h3.text-lg.font-semibold Listar Reservas
+      p.text-sm.text-gray-500 Administrar reservas de hoy
+
+    a.card.hover_bg-gray-50(href="/usuarios")
+      h3.text-lg.font-semibold Usuarios
+      p.text-sm.text-gray-500 Administrar usuarios del sistema
+
+    a.card.hover_bg-gray-50(href="/mesas")
+      h3.text-lg.font-semibold Mesas
+      p.text-sm.text-gray-500 Crear, editar y desactivar mesas
+
+    a.card.hover_bg-gray-50(href="/clientes")
+      h3.text-lg.font-semibold Clientes
+      p.text-sm.text-gray-500 Historial y datos de clientes
+
+    a.card.hover_bg-gray-50(href="/horarios")
+      h3.text-lg.font-semibold Horarios
+      p.text-sm.text-gray-500 Historial y datos de clientes
+
+    
+
+  .mt-12.card
+    h2.text-xl.font-bold.text-gray-900.mb-4 Todas las Reservas
+
+    if reservas.length > 0
+      .overflow-x-auto
+        table.min-w-full.divide-y.divide-gray-200
+          thead.bg-gray-50
+            tr
+              th.px-4.py-2.text-left Fecha
+              th.px-4.py-2.text-left Hora
+              th.px-4.py-2.text-left Cliente
+              th.px-4.py-2.text-left Mesa
+              th.px-4.py-2.text-left Personas
+              th.px-4.py-2.text-left Estado
+              th.px-4.py-2.text-left Acciones
+          tbody.bg-white.divide-y.divide-gray-200
+            each reserva in reservas
+              tr
+                td.px-4.py-2= reserva.fecha
+                td.px-4.py-2= reserva.hora.substring(0,5)
+                td.px-4.py-2= reserva.cliente ? `${reserva.cliente.nombre} ${reserva.cliente.apellido}` : '—'
+                td.px-4.py-2= reserva.mesa ? reserva.mesa.numero : '—'
+                td.px-4.py-2= reserva.numeroPersonas
+                td.px-4.py-2
+                  span.badge= reserva.estado
+                td.px-4.py-2
+                  a.text-primary-600(href=`/reservas/${reserva.id}`) Ver
+    else
+      p.text-gray-500.text-center.py-6 No hay reservas registradas

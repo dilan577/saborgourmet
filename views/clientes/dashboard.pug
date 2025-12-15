@@ -1,0 +1,30 @@
+extends ../layouts/main
+
+block content
+  h1.text-3xl.font-bold Hola #{cliente.nombre} 👋
+  p.text-gray-600 Aquí puedes gestionar tus reservas
+
+  .mt-6.card
+    a.btn-primary(href="/reservas-cliente/crear") Crear Reserva
+
+
+  .mt-8.card
+    h2.text-xl.font-bold Mis Reservas
+
+    if misReservas.length > 0
+      table.min-w-full
+        thead
+          tr
+            th Fecha
+            th Hora
+            th Mesa
+            th Estado
+        tbody
+          each r in misReservas
+            tr
+              td= r.fecha
+              td= r.hora
+              td= r.mesa ? r.mesa.numero : 'Sin asignar'
+              td= r.estado
+    else
+      p.text-gray-500 No tienes reservas aún

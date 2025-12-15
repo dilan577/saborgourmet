@@ -1,0 +1,39 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900= titulo
+    p.mt-2.text-sm.text-gray-600 Modifica la información de la mesa
+  
+  .mt-8.max-w-2xl
+    .card
+      if error
+        .mb-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded
+          p= error
+      
+      form(action=`/mesas/${mesa.id}/editar` method="POST")
+        .space-y-6
+          div
+            label.label(for="numero") Número de Mesa *
+            input#numero.input-field(type="text" name="numero" required value=mesa.numero)
+          
+          div
+            label.label(for="capacidad") Capacidad *
+            input#capacidad.input-field(type="number" name="capacidad" required min="1" max="20" value=mesa.capacidad)
+            p.mt-1.text-sm.text-gray-500 Capacidad entre 1 y 20 personas
+          
+          div
+            label.label(for="zona") Zona *
+            select#zona.input-field(name="zona" required)
+              option(value="interior" selected=mesa.zona === 'interior') Interior
+              option(value="terraza" selected=mesa.zona === 'terraza') Terraza
+              option(value="vip" selected=mesa.zona === 'vip') VIP
+              option(value="exterior" selected=mesa.zona === 'exterior') Exterior
+          
+          div
+            label.label(for="descripcion") Descripción
+            textarea#descripcion.input-field(name="descripcion" rows="3")= mesa.descripcion
+          
+          .flex.space-x-4
+            button.btn-primary(type="submit") Actualizar Mesa
+            a.btn-secondary(href="/mesas") Cancelar

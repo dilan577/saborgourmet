@@ -1,0 +1,93 @@
+doctype html
+html(lang="es")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= titulo || 'SaborGourmet'
+    link(rel="stylesheet" href="/css/style.css")
+  
+  body.bg-gray-50.min-h-screen
+    if estaAutenticado
+      nav.bg-white.shadow-lg
+        .max-w-7xl.mx-auto.px-4.sm_px-6.lg_px-8
+          .flex.justify-between.h-16
+            .flex
+              .flex-shrink-0.flex.items-center
+                a(href="/dashboard").text-2xl.font-bold.text-primary-600 SaborGourmet
+
+              .hidden.sm_ml-6.sm_flex.sm_space-x-8
+                a(
+                  href="/dashboard"
+                  class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  class={
+                    "border-primary-500 text-gray-900": titulo === 'Dashboard',
+                    "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700": titulo !== 'Dashboard'
+                  }
+                ) Dashboard
+
+                if rol === 'admin' || rol === 'mesero'
+                  a(
+                    href="/reservas"
+                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    class={
+                      "border-primary-500 text-gray-900": titulo && titulo.includes('Reserva'),
+                      "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700": !titulo || !titulo.includes('Reserva')
+                    }
+                  ) Reservas
+
+                  a(
+                    href="/clientes"
+                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    class={
+                      "border-primary-500 text-gray-900": titulo && titulo.includes('Cliente'),
+                      "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700": !titulo || !titulo.includes('Cliente')
+                    }
+                  ) Clientes
+
+                  a(
+                    href="/mesas"
+                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    class={
+                      "border-primary-500 text-gray-900": titulo && titulo.includes('Mesa'),
+                      "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700": !titulo || !titulo.includes('Mesa')
+                    }
+                  ) Mesas
+
+                if rol === 'admin'
+                  a(
+                    href="/horarios"
+                    class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    class={
+                      "border-primary-500 text-gray-900": titulo && titulo.includes('Horario'),
+                      "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700": !titulo || !titulo.includes('Horario')
+                    }
+                  ) Horarios
+
+            .flex.items-center
+              .ml-3.relative
+                .flex.items-center.space-x-4
+                  span.text-sm.text-gray-700 #{usuario.nombre} #{usuario.apellido}
+                  span.text-xs.px-2.py-1.rounded-full(
+                    class={
+                      "bg-red-100 text-red-800": rol === 'admin',
+                      "bg-blue-100 text-blue-800": rol === 'mesero',
+                      "bg-green-100 text-green-800": rol === 'cliente'
+                    }
+                  )= rol
+                  a(href="/auth/logout").btn-secondary.text-sm Cerrar Sesión
+
+    main.py-10
+      .max-w-7xl.mx-auto.sm_px-6.lg_px-8
+        block content
+
+    // ==========================
+    // SCRIPTS GLOBALES
+    // ==========================
+    script(src="/js/main.js")
+
+    // ===== BOTÓN VOLVER UNIVERSAL =====
+    script.
+      function volverAtras() {
+        window.history.back();
+      }
+

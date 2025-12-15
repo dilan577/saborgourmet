@@ -1,0 +1,17 @@
+extends layouts/main
+
+block content
+  .max-w-md.mx-auto.w-full.p-8
+    .card.text-center
+      h1= (error && error.status) ? error.status : 500
+        p= mensaje || 'Ha ocurrido un error'
+
+      h2.text-2xl.font-semibold.text-gray-900.mt-4
+        = mensaje || 'Ha ocurrido un error'
+
+      p.mt-4.text-gray-600
+        Lo sentimos, ha ocurrido un error.
+
+      .mt-6
+        button.btn-primary(onclick="window.history.back()")
+          Volver

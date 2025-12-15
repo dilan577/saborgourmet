@@ -1,0 +1,64 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    .flex.justify-between.items-center
+      div
+        h1.text-3xl.font-bold.text-gray-900= titulo
+        p.mt-2.text-sm.text-gray-600= cliente.email
+      a.btn-secondary(href="/clientes") Volver
+  
+  .mt-8.grid.grid-cols-1.gap-6.lg_grid-cols-3
+    .card
+      h3.text-lg.font-semibold.text-gray-900.mb-2 Información de Contacto
+      .space-y-2
+        p
+          span.font-medium Teléfono: 
+          span= cliente.telefono
+        p
+          span.font-medium Estado: 
+          span.badge(class={"badge-success": !cliente.bloqueado, "badge-danger": cliente.bloqueado})= cliente.bloqueado ? 'Bloqueado' : 'Activo'
+        p
+          span.font-medium No-Shows: 
+          span(class={"text-red-600 font-semibold": cliente.noShows > 2})= cliente.noShows
+    
+    .card
+      h3.text-lg.font-semibold.text-gray-900.mb-2 Estadísticas
+      .space-y-2
+        p
+          span.font-medium Total Reservas: 
+          span= totalReservas
+        p
+          span.font-medium Completadas: 
+          span.text-green-600= reservasCompletadas
+        p
+          span.font-medium Canceladas: 
+          span.text-red-600= reservasCanceladas
+    
+    .card
+      h3.text-lg.font-semibold.text-gray-900.mb-2 Notas
+      p.text-sm.text-gray-600= cliente.notas || 'Sin notas'
+  
+  .mt-8.card
+    h2.text-xl.font-bold.text-gray-900.mb-4 Historial de Reservas
+    if cliente.reservas.length > 0
+      .overflow-x-auto
+        table.min-w-full.divide-y.divide-gray-200
+          thead.bg-gray-50
+            tr
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Fecha
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Hora
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Mesa
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Personas
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Estado
+          tbody.bg-white.divide-y.divide-gray-200
+            each reserva in cliente.reservas
+              tr
+                td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= reserva.fecha
+                td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= reserva.hora.substring(0, 5)
+                td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= reserva.mesa ? reserva.mesa.numero : 'Sin asignar'
+                td.px-6.py-4.whitespace-nowrap.text-sm.text-gray-900= reserva.numeroPersonas
+                td.px-6.py-4.whitespace-nowrap
+                  span.badge(class={"badge-warning": reserva.estado === 'pendiente', "badge-success": reserva.estado === 'confirmada' || reserva.estado === 'completada', "badge-danger": reserva.estado === 'cancelada' || reserva.estado === 'no_show', "badge-info": reserva.estado === 'en_curso'})= reserva.estado
+    else
+      p.text-gray-500.text-center.py-8 No hay reservas registradas

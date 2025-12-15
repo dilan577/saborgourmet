@@ -1,0 +1,53 @@
+extends ../layouts/main
+
+block content
+  h1.text-2xl.font-bold.mb-6= titulo
+
+  form.card(method="POST" action="/reservas/crear")
+    .space-y-4
+
+      // ==========================
+      // CLIENTE (NO SELECT)
+      // ==========================
+      if clienteLogueado
+        div
+          label.label Cliente
+          input.input-field(
+            type="text"
+            value=`${clienteLogueado.nombre} ${clienteLogueado.apellido}`
+            disabled
+          )
+
+      // ==========================
+      // ADMIN / MESERO
+      // ==========================
+      if clientes
+        div
+          label.label Cliente *
+          select.input-field(name="clienteId" required)
+            option(value="") Seleccione un cliente
+            each cliente in clientes
+              option(value=cliente.id)= `${cliente.nombre} ${cliente.apellido} - ${cliente.email}`
+
+      div
+        label.label Fecha *
+        input.input-field(type="date" name="fecha" required)
+
+      div
+        label.label Hora *
+        input.input-field(type="time" name="hora" required)
+
+      div
+        label.label Personas *
+        input.input-field(type="number" name="numeroPersonas" min="1" required)
+
+      div
+        label.label Mesa
+        select.input-field(name="mesaId")
+          option(value="") Sin asignar
+          each mesa in mesas
+            option(value=mesa.id)= `${mesa.numero} (${mesa.capacidad})`
+
+      div.flex.justify-between.mt-6
+        button.btn-primary(type="submit") Guardar Reserva
+        button.btn-secondary(type="button" onclick="window.history.back()") Volver

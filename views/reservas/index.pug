@@ -1,0 +1,62 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    .flex.justify-between.items-center
+      div
+        h1.text-3xl.font-bold.text-gray-900= titulo
+        p.mt-2.text-sm.text-gray-600 Administra todas las reservas del restaurante
+      if rol === 'admin' || rol === 'mesero' 
+        .flex.gap-2
+          a.btn-primary(href="/reservas/crear") Nueva Reserva
+          a.btn-secondary(href="/admin") Volver
+
+ 
+
+     
+      
+
+  // ===============================
+  // TABLA
+  // ===============================
+  .mt-8.card
+    if reservas.length > 0
+      .overflow-x-auto
+        table.min-w-full.divide-y.divide-gray-200
+          thead.bg-gray-50
+            tr
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase ID
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Fecha
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Hora
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Cliente
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Mesa
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Personas
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Estado
+              th.px-6.py-3.text-left.text-xs.font-medium.text-gray-500.uppercase Acciones
+
+          tbody.bg-white.divide-y.divide-gray-200
+            each reserva in reservas
+              tr
+                td.px-6.py-4.text-sm.text-gray-900= reserva.id
+                td.px-6.py-4.text-sm.text-gray-900= reserva.fecha
+                td.px-6.py-4.text-sm.text-gray-900= reserva.hora.substring(0, 5)
+                td.px-6.py-4.text-sm.text-gray-900
+                  if reserva.cliente
+                    | #{reserva.cliente.nombre} #{reserva.cliente.apellido}
+                  else
+                    | Sin cliente
+                td.px-6.py-4.text-sm.text-gray-900= reserva.mesa ? reserva.mesa.numero : 'Sin asignar'
+                td.px-6.py-4.text-sm.text-gray-900= reserva.numeroPersonas
+                td.px-6.py-4
+                  span.badge(
+                    class={
+                      "badge-warning": reserva.estado === 'pendiente',
+                      "badge-success": reserva.estado === 'confirmada' || reserva.estado === 'completada',
+                      "badge-info": reserva.estado === 'en_curso',
+                      "badge-danger": reserva.estado === 'cancelada' || reserva.estado === 'no_show'
+                    }
+                  )= reserva.estado
+                td.px-6.py-4.text-sm
+                  a.text-blue-600.hover_text-blue-900(href=`/reservas/${reserva.id}`) Ver
+    else
+      p.text-gray-500.text-center.py-6 No hay reservas registradas

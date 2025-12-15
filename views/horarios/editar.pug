@@ -1,0 +1,44 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900= titulo
+  
+  .mt-8.max-w-2xl
+    .card
+      if error
+        .mb-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded
+          p= error
+      
+      form(action=`/horarios/${horario.id}/editar` method="POST")
+        .space-y-6
+          div
+            label.label(for="diaSemana") Día de la Semana *
+            select#diaSemana.input-field(name="diaSemana" required)
+              option(value="lunes" selected=horario.diaSemana === 'lunes') Lunes
+              option(value="martes" selected=horario.diaSemana === 'martes') Martes
+              option(value="miercoles" selected=horario.diaSemana === 'miercoles') Miércoles
+              option(value="jueves" selected=horario.diaSemana === 'jueves') Jueves
+              option(value="viernes" selected=horario.diaSemana === 'viernes') Viernes
+              option(value="sabado" selected=horario.diaSemana === 'sabado') Sábado
+              option(value="domingo" selected=horario.diaSemana === 'domingo') Domingo
+          
+          div
+            label.label(for="horaInicio") Hora de Inicio *
+            input#horaInicio.input-field(type="time" name="horaInicio" required value=horario.horaInicio.substring(0, 5))
+          
+          div
+            label.label(for="horaFin") Hora de Fin *
+            input#horaFin.input-field(type="time" name="horaFin" required value=horario.horaFin.substring(0, 5))
+          
+          div
+            label.label(for="intervaloReserva") Intervalo de Reserva (minutos) *
+            input#intervaloReserva.input-field(type="number" name="intervaloReserva" required value=horario.intervaloReserva min="15" max="120")
+          
+          div
+            label.label(for="duracionEstandar") Duración Estándar (minutos) *
+            input#duracionEstandar.input-field(type="number" name="duracionEstandar" required value=horario.duracionEstandar min="30" max="240")
+          
+          .flex.space-x-4
+            button.btn-primary(type="submit") Actualizar Horario
+            a.btn-secondary(href="/horarios") Cancelar

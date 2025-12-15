@@ -1,0 +1,111 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900= titulo
+    p.mt-2.text-sm.text-gray-600 Bienvenido al sistema de gestión de reservas
+
+  // ===============================
+  // TARJETAS SUPERIORES
+  // ===============================
+  .mt-8.grid.grid-cols-1.gap-5.sm_grid-cols-2.lg_grid-cols-4
+    .card.bg-blue-50
+      .ml-5
+        p.text-sm.text-gray-600 Reservas Hoy
+        p.text-3xl.font-bold.text-gray-900= totalReservasHoy || 0
+
+    .card.bg-yellow-50
+      .ml-5
+        p.text-sm.text-gray-600 Pendientes
+        p.text-3xl.font-bold.text-gray-900= reservasPendientes || 0
+
+    .card.bg-green-50
+      .ml-5
+        p.text-sm.text-gray-600 Confirmadas
+        p.text-3xl.font-bold.text-gray-900= reservasConfirmadas || 0
+
+    if rol === 'cliente'
+      .card.bg-purple-50
+        .ml-5
+          p.text-sm.text-gray-600 ¿Deseas reservar?
+          a.btn-primary.mt-2(href="/reservas/crear") Crear Reserva
+
+  // ===============================
+  // ESTADO DE MESAS
+  // ===============================
+  .mt-8.grid.grid-cols-1.gap-8.lg_grid-cols-2
+    .card
+      h2.text-xl.font-bold.text-gray-900.mb-4 Estado de Mesas
+      .grid.grid-cols-2.gap-4
+        div
+          p.text-sm.text-gray-600 Mesas Disponibles
+          p.text-2xl.font-bold.text-green-600= mesasDisponibles ? mesasDisponibles.length : 0
+        div
+          p.text-sm.text-gray-600 Mesas Ocupadas
+          p.text-2xl.font-bold.text-red-600= mesasOcupadas ? mesasOcupadas.length : 0
+
+      .mt-4
+        p.text-sm.text-gray-500 Total: #{totalMesas || 0} mesas
+
+    // ===============================
+    // RESERVAS PRÓXIMAS
+    // ===============================
+    .card
+      h2.text-xl.font-bold.text-gray-900.mb-4 Reservas Próximas (2 horas)
+
+      if reservasProximas && reservasProximas.length > 0
+        each reserva in reservasProximas
+          .flex.justify-between.items-center.p-3.bg-gray-50.rounded-lg.mb-2
+            div
+              p.font-semibold
+                if reserva.cliente
+                  | #{reserva.cliente.nombre} #{reserva.cliente.apellido}
+                else
+                  | Sin cliente
+              p.text-sm.text-gray-600= `${reserva.hora.substring(0,5)} - ${reserva.numeroPersonas} personas`
+            span.badge(
+              class={
+                "badge-warning": reserva.estado === 'pendiente',
+                "badge-success": reserva.estado === 'confirmada'
+              }
+            )= reserva.estado
+      else
+        p.text-gray-500.text-center.py-4 No hay reservas próximas
+
+  // ==================================================
+  // RESERVAS DE HOY (SOLO ADMIN Y MESERO)
+  // ==================================================
+  if rol === 'admin' || rol === 'mesero'
+    .mt-8.card
+      .flex.justify-between.items-center.mb-4
+        h2.text-xl.font-bold.text-gray-900 Reservas de Hoy
+        a.btn-primary(href="/reservas/crear") Nueva Reserva
+
+      if reservasHoy && reservasHoy.length > 0
+        .overflow-x-auto
+          table.min-w-full.divide-y.divide-gray-200
+            thead.bg-gray-50
+              tr
+                th Hora
+                th Cliente
+                th Mesa
+                th Personas
+                th Estado
+                th Acciones
+            tbody.bg-white.divide-y.divide-gray-200
+              each reserva in reservasHoy
+                tr
+                  td.px-4.py-2= reserva.hora.substring(0,5)
+                  td.px-4.py-2
+                    if reserva.cliente
+                      | #{reserva.cliente.nombre} #{reserva.cliente.apellido}
+                    else
+                      | Sin cliente
+                  td.px-4.py-2= reserva.mesa ? reserva.mesa.numero : 'Sin asignar'
+                  td.px-4.py-2= reserva.numeroPersonas
+                  td.px-4.py-2
+                    span.badge= reserva.estado
+                  td.px-4.py-2
+                    a.text-blue-600.hover_text-blue-900(href=`/reservas/${reserva.id}`) Ver
+      else
+        p.text-gray-500.text-center.py-6 No hay reservas para hoy

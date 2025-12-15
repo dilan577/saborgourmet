@@ -1,0 +1,68 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900= titulo
+  
+  .mt-8.max-w-2xl
+    .card
+      if error
+        .mb-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded
+          p= error
+      
+      form(action="/clientes/crear" method="POST")
+        .space-y-6
+          div
+            label.label(for="nombre") Nombre *
+            input#nombre.input-field(
+              type="text"
+              name="nombre"
+              required
+            )
+          
+          div
+            label.label(for="apellido") Apellido *
+            input#apellido.input-field(
+              type="text"
+              name="apellido"
+              required
+            )
+          
+          div
+            label.label(for="email") Email *
+            input#email.input-field(
+              type="email"
+              name="email"
+              required
+            )
+          
+          div
+            label.label(for="telefono") Teléfono *
+            input#telefono.input-field(
+              type="tel"
+              name="telefono"
+              required
+            )
+
+          // 🔐 CONTRASEÑA (CORRECTA)
+          div
+            label.label(for="password") Contraseña *
+            input#password.input-field(
+              type="password"
+              name="password"
+              required
+              minlength="6"
+              autocomplete="new-password"
+              placeholder="Mínimo 6 caracteres"
+            )
+          
+          div
+            label.label(for="notas") Notas
+            textarea#notas.input-field(
+              name="notas"
+              rows="3"
+            )
+          
+          .flex.space-x-4
+            button.btn-primary(type="submit") Registrar Cliente
+            a.btn-secondary(href="/clientes") Cancelar

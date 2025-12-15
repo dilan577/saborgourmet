@@ -1,0 +1,13 @@
+extends ../../layouts/main
+
+block content
+  h1.text-2xl.font-bold Mis Reservas
+
+  if reservas.length > 0
+    each r in reservas
+      .card.mb-3
+        p #{r.fecha} - #{r.hora}
+        p Mesa: #{r.mesa ? r.mesa.numero : 'Sin asignar'}
+        p Estado: #{r.estado}
+  else
+    p.text-gray-500 No tienes reservas registradas

@@ -1,0 +1,31 @@
+extends ../layouts/main
+
+block content
+  h1.text-3xl.font-bold.text-gray-900 Reservas de Hoy (Admin)
+
+    
+    .flex.justify-left.mt-4
+    a(href="/admin").btn-secondary.text-sm Volver
+   
+       
+  if reservasHoy.length
+    table.table-auto.w-full.mt-6
+      thead
+        tr
+          th Hora
+          th Cliente
+          th Mesa
+          th Estado
+          th Acciones
+      tbody
+        each r in reservasHoy
+          tr
+            td= r.hora.substring(0,5)
+            td= `${r.cliente.nombre} ${r.cliente.apellido}`
+            td= r.mesa ? r.mesa.numero : '—'
+            td= r.estado
+            td
+              a.text-blue-600(href=`/reservas/${r.id}`) Ver
+              a.ml-2.text-yellow-600(href=`/reservas/${r.id}/editar`) Editar
+  else
+    p No hay reservas hoy

@@ -1,0 +1,58 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    .flex.justify-between.items-center
+      div
+        h1.text-3xl.font-bold.text-gray-900= titulo
+        p.mt-2.text-sm.text-gray-600 Configura los horarios de atención del restaurante
+      a.btn-primary(href="/horarios/crear") Crear Horario
+      a.btn-secondary(href="/admin") Volver
+
+  
+  .mt-8.space-y-6
+    each horarios, dia in horariosPorDia
+      .card
+        h3.text-lg.font-bold.text-gray-900.mb-4.capitalize= dia
+        if horarios.length > 0
+          .space-y-2
+            each horario in horarios
+              .flex.justify-between.items-center.p-3.bg-gray-50.rounded-lg
+                div
+                  p.font-semibold= `${horario.horaInicio.substring(0, 5)} - ${horario.horaFin.substring(0, 5)}`
+                  p.text-sm.text-gray-600= `Intervalo: ${horario.intervaloReserva} min | Duración: ${horario.duracionEstandar} min`
+                .flex.items-center.space-x-2
+                  span.badge(class={"badge-success": horario.activo, "badge-danger": !horario.activo})= horario.activo ? 'Activo' : 'Inactivo'
+                  a.text-blue-600.hover_text-blue-900(href=`/horarios/${horario.id}/editar`) Editar
+                  button.text-yellow-600.hover_text-yellow-900(onclick=`toggleEstado(${horario.id})`) Estado
+                  button.text-red-600.hover_text-red-900(onclick=`eliminar(${horario.id})`) Eliminar
+        else
+          p.text-gray-500.text-center.py-4 No hay horarios configurados para este día
+  
+  script.
+    async function toggleEstado(id) {
+      try {
+        const response = await fetch(`/horarios/${id}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) window.location.reload();
+      } catch (error) {
+        alert('Error al cambiar estado');
+      }
+    }
+    
+    async function eliminar(id) {
+      if (!confirm('¿Eliminar este horario?')) return;
+      try {
+        const response = await fetch(`/horarios/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) window.location.reload();
+      } catch (error) {
+        alert('Error al eliminar');
+      }
+    }

@@ -1,0 +1,22 @@
+extends ../../layouts/main
+
+block content
+  h1.text-2xl.font-bold Crear Reserva
+
+  form(method="POST")
+    label Fecha
+    input(type="date" name="fecha" required)
+
+    label Hora
+    input(type="time" name="hora" required)
+
+    label Personas
+    input(type="number" name="numeroPersonas" min="1" required)
+
+    label Mesa
+    select(name="mesaId")
+      option(value="") Sin asignar
+      each mesa in mesas
+        option(value=mesa.id)= mesa.numero
+
+    button.btn-primary.mt-4(type="submit") Crear

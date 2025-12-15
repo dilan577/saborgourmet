@@ -1,0 +1,83 @@
+extends ../layouts/main
+
+block content
+  .px-4.sm_px-0
+    // Modal de error (solo una vez)
+    include ../partials/modal_error
+
+    h1.text-3xl.font-bold.text-gray-900= titulo
+    p.mt-2.text-sm.text-gray-600 Editar reserva existente
+  
+  .mt-8.max-w-2xl
+    .card
+      form(method="POST" action=`/reservas/${reserva.id}/editar`)
+        .space-y-6
+
+          if clientes
+            div
+              label.label(for="clienteId") Cliente *
+              select#clienteId.input-field(name="clienteId" required)
+                each cliente in clientes
+                  option(
+                    value=cliente.id
+                    selected=cliente.id === reserva.clienteId
+                  ) #{cliente.nombre} #{cliente.apellido}
+
+          div
+            label.label(for="fecha") Fecha *
+            input#fecha.input-field(
+              type="date"
+              name="fecha"
+              required
+              value=reserva.fecha
+            )
+
+          div
+            label.label(for="hora") Hora *
+            input#hora.input-field(
+              type="time"
+              name="hora"
+              required
+              value=reserva.hora.substring(0,5)
+            )
+
+          div
+            label.label(for="numeroPersonas") Número de Personas *
+            input#numeroPersonas.input-field(
+              type="number"
+              name="numeroPersonas"
+              min="1"
+              required
+              value=reserva.numeroPersonas
+            )
+
+          div
+            label.label(for="mesaId") Mesa
+            select#mesaId.input-field(name="mesaId")
+              option(value="") Sin asignar
+              each mesa in mesas
+                option(
+                  value=mesa.id
+                  selected=mesa.id === reserva.mesaId
+                ) Mesa #{mesa.numero} - #{mesa.zona} (#{mesa.capacidad} personas)
+
+          div
+            label.label(for="estado") Estado *
+            select#estado.input-field(name="estado" required)
+              option(value="pendiente" selected=reserva.estado === 'pendiente') Pendiente
+              option(value="confirmada" selected=reserva.estado === 'confirmada') Confirmada
+              option(value="en_curso" selected=reserva.estado === 'en_curso') En curso
+              option(value="completada" selected=reserva.estado === 'completada') Completada
+              option(value="cancelada" selected=reserva.estado === 'cancelada') Cancelada
+              option(value="no_show" selected=reserva.estado === 'no_show') No show
+
+          div
+            label.label(for="notas") Notas
+            textarea#notas.input-field(
+              name="notas"
+              rows="3"
+            )= reserva.notas || ''
+
+          .flex.space-x-4
+            button.btn-primary(type="submit") Actualizar reserva
+            a.btn-secondary(href=`/reservas/${reserva.id}`) Cancelar
