@@ -62,7 +62,7 @@ const procesarLogin = async (req, res) => {
       case 'admin':
         return res.redirect('/admin');
       case 'mesero':
-        return res.redirect('/admin/reservas-hoy');
+        return res.redirect('/dashboard');
       case 'cliente':
         return res.redirect('/cliente/dashboard');
       default:

@@ -31,23 +31,45 @@ block content
 
       div
         label.label Fecha *
-        input.input-field(type="date" name="fecha" required)
+        input.input-field(
+          type="date"
+          name="fecha"
+          required
+          min=new Date().toISOString().split('T')[0]
+        )
 
       div
         label.label Hora *
-        input.input-field(type="time" name="hora" required)
+        select.input-field(name="hora" required)
+          option(value="") Seleccione una hora
+          // Las horas se cargarán dinámicamente según la fecha
 
       div
         label.label Personas *
-        input.input-field(type="number" name="numeroPersonas" min="1" required)
+        input.input-field(
+          type="number"
+          name="numeroPersonas"
+          min="1"
+          required
+        )
 
       div
         label.label Mesa
-        select.input-field(name="mesaId")
-          option(value="") Sin asignar
+        select.input-field(name="mesaId" required)
+          option(value="") Seleccione una mesa
           each mesa in mesas
-            option(value=mesa.id)= `${mesa.numero} (${mesa.capacidad})`
+            option(value=mesa.id)= `${mesa.numero} (${mesa.capacidad} personas)`
 
       div.flex.justify-between.mt-6
         button.btn-primary(type="submit") Guardar Reserva
         button.btn-secondary(type="button" onclick="window.history.back()") Volver
+
+  // ==========================
+  // SCRIPT PARA CARGAR HORAS
+  // ==========================
+  script.
+  function volver() {
+    window.history.back();
+  }
+
+  script(src="/js/horas.js")

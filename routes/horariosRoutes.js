@@ -1,19 +1,40 @@
 const express = require('express');
 const router = express.Router();
-const horariosController = require('../controllers/horariosController');
-const { estaAutenticado, esAdmin } = require('../middleware/auth');
+const { Horario } = require('../models');
 
-// Todas las rutas requieren autenticación y rol admin
-router.use(estaAutenticado);
-router.use(esAdmin);
+router.get('/disponibles', async (req, res) => {
+  try {
+    const { fecha } = req.query;
+    if (!fecha) return res.json([]);
 
-// Rutas de horarios
-router.get('/', horariosController.listarHorarios);
-router.get('/crear', horariosController.mostrarFormularioCrear);
-router.post('/crear', horariosController.crearHorario);
-router.get('/:id/editar', horariosController.mostrarFormularioEditar);
-router.post('/:id/editar', horariosController.actualizarHorario);
-router.post('/:id/toggle', horariosController.toggleEstadoHorario);
-router.delete('/:id', horariosController.eliminarHorario);
+    const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const diaSemana = dias[new Date(fecha).getDay()];
+
+    const horarios = await Horario.findAll({
+      where: { diaSemana, activo: true },
+      order: [['horaInicio', 'ASC']]
+    });
+
+    const horas = [];
+
+    horarios.forEach(h => {
+      let actual = h.horaInicio;
+
+      while (actual < h.horaFin) {
+        horas.push(actual.substring(0, 5));
+
+        const [hh, mm] = actual.split(':').map(Number);
+        const d = new Date(1970, 0, 1, hh, mm);
+        d.setMinutes(d.getMinutes() + h.intervaloReserva);
+        actual = d.toTimeString().substring(0, 5);
+      }
+    });
+
+    res.json(horas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json([]);
+  }
+});
 
 module.exports = router;

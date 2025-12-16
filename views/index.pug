@@ -1,22 +1,80 @@
-doctype html
-html(lang="es")
-  head
-    title Bienvenidos a SaborGourmet
-    link(rel="stylesheet", href="/css/style.css")
-  body
-    h1 ¡Bienvenidos a SaborGourmet!
-    p Para realizar una reserva, por favor:
-    a(href="/auth/login") Iniciar sesión
-    br
-    a(href="/auth/registro") Registrarse
-    hr
-    h2 Reserva sin cuenta
-    form(action="/reservas/crear" method="POST")
-      label(for="fecha") Fecha:
-      input(type="date" name="fecha" required)
-      label(for="hora") Hora:
-      input(type="time" name="hora" required)
-      label(for="numeroPersonas") Número de personas:
-      input(type="number" name="numeroPersonas" min="1" required)
-      button(type="submit") Crear reserva
+extends layouts/main
 
+block content
+  .px-4.sm_px-0
+    h1.text-3xl.font-bold.text-gray-900 Bienvenidos a SaborGourmet
+    p.mt-2.text-sm.text-gray-600 Sistema de gestión de reservas
+
+  .mt-6.flex.gap-4
+    a.btn.btn-danger(href="/auth/login") Iniciar sesión
+    a.btn.btn-secondary(href="/auth/registro") Registrarse
+
+  // 🔔 ALERTAS (CENTRADAS)
+  if ok
+    .alert-overlay
+      .alert-box.alert-success
+        span.alert-close(onclick="this.closest('.alert-overlay').remove()") ✖
+        p= ok
+
+  if error
+    .alert-overlay
+      .alert-box.alert-danger
+        span.alert-close(onclick="this.closest('.alert-overlay').remove()") ✖
+        p= error
+
+  .mt-10.grid.grid-cols-1.lg_grid-cols-2.gap-8
+    .card
+      h2.text-xl.font-bold.mb-4 Reserva sin cuenta
+      p.text-sm.text-gray-500.mb-6 Haz tu reserva rápidamente
+
+      form(method="POST", action="/reservar")
+        input(type="hidden", name="esPublica", value="1")
+
+        .space-y-4
+          div
+            label.label Nombre completo
+            input.input-field(type="text", name="nombre", required)
+
+          div
+            label.label Teléfono
+            input.input-field(type="text", name="telefono", required)
+
+          div
+            label.label Fecha
+            input.input-field(
+              type="date",
+              name="fecha",
+              required,
+              min=new Date().toISOString().split('T')[0]
+            )
+
+          div
+            label.label Hora
+            select.input-field(name="hora", required)
+              option(value="") Selecciona una hora
+              each h in ['12:00','12:30','13:00','13:30','14:00','19:00','19:30','20:00','20:30','21:00']
+                option(value=h)= h
+
+          div
+            label.label Número de personas
+            input.input-field(type="number", name="numeroPersonas", min="1", required)
+
+          div
+            label.label Mesa
+            select.input-field(name="mesaId", required)
+              if mesas && mesas.length
+                each mesa in mesas
+                  option(value=mesa.id)= `Mesa ${mesa.numero} (${mesa.capacidad} personas)`
+              else
+                option(value="") No hay mesas disponibles
+
+        .mt-6
+          button.btn.btn-danger.w-full(type="submit") Crear reserva
+
+    .card
+      h2.text-xl.font-bold.mb-4 ¿Por qué reservar con nosotros?
+      ul.space-y-3.text-gray-600
+        li ✔ Reservas rápidas y seguras
+        li ✔ Mesas según número de personas
+        li ✔ Horarios controlados
+        li ✔ Sin necesidad de registrarte

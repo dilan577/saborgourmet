@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const indexController = require('../controllers/indexController');
 
-// INDEX PÚBLICO (SIEMPRE VISIBLE)
-router.get('/', (req, res) => {
-  res.render('index', {
-    titulo: 'SaborGourmet'
-  });
-});
+router.get('/', indexController.index);
+router.post('/reservar', indexController.crearReservaPublica);
 
 module.exports = router;

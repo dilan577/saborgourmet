@@ -6,13 +6,12 @@ block content
       div
         h1.text-3xl.font-bold.text-gray-900= titulo
         if reserva.cliente
-          p.mt-2.text-sm.text-gray-600= `Reserva para ${reserva.cliente.nombre} ${reserva.cliente.apellido}`
+          p.mt-2.text-sm.text-gray-600 Reserva para #{reserva.cliente.nombre} #{reserva.cliente.apellido}
         else
           p.mt-2.text-sm.text-gray-600 Cliente no asignado
 
       .flex.space-x-2
         if rol === 'admin' || rol === 'mesero'
-          a.btn-secondary(href=`/reservas/${reserva.id}/editar`) Editar
           button.btn-secondary(type="button" onclick="window.history.back()") Volver
 
   .mt-8.grid.grid-cols-1.gap-6.lg_grid-cols-2
@@ -25,7 +24,7 @@ block content
 
         div
           p.text-sm.text-gray-600 Hora
-          p.font-semibold= reserva.hora ? reserva.hora.substring(0, 5) : '-'
+          p.font-semibold= reserva.hora ? reserva.hora.substring(0,5) : '-'
 
         div
           p.text-sm.text-gray-600 Número de Personas
@@ -39,10 +38,10 @@ block content
           p.text-sm.text-gray-600 Estado
           span.badge(
             class={
-              "badge-warning": reserva.estado === 'pendiente',
-              "badge-success": reserva.estado === 'confirmada' || reserva.estado === 'completada',
-              "badge-info": reserva.estado === 'en_curso',
-              "badge-danger": reserva.estado === 'cancelada' || reserva.estado === 'no_show'
+              'badge-warning': reserva.estado === 'pendiente',
+              'badge-success': reserva.estado === 'confirmada' || reserva.estado === 'completada',
+              'badge-info': reserva.estado === 'en_curso',
+              'badge-danger': reserva.estado === 'cancelada' || reserva.estado === 'no_show'
             }
           )= reserva.estado
 
@@ -52,7 +51,7 @@ block content
         .space-y-3
           div
             p.text-sm.text-gray-600 Nombre
-            p.font-semibold= `${reserva.cliente.nombre} ${reserva.cliente.apellido}`
+            p.font-semibold #{reserva.cliente.nombre} #{reserva.cliente.apellido}
 
           div
             p.text-sm.text-gray-600 Email
@@ -61,23 +60,8 @@ block content
           div
             p.text-sm.text-gray-600 Teléfono
             p.font-semibold= reserva.cliente.telefono || '-'
-
-          div
-            a.text-primary-600.hover_text-primary-900(
-              href=`/clientes/${reserva.cliente.id}`
-            ) Ver historial del cliente
       else
-        p.text-gray-500 No hay cliente asociado a esta reserva
-
-  if reserva.notas
-    .mt-6.card
-      h3.text-lg.font-semibold.text-gray-900.mb-2 Notas
-      p.text-gray-700= reserva.notas
-
-  if reserva.motivoCancelacion
-    .mt-6.card.bg-red-50
-      h3.text-lg.font-semibold.text-red-900.mb-2 Motivo de Cancelación
-      p.text-red-700= reserva.motivoCancelacion
+        p.text-gray-500 No hay cliente asociado
 
   if rol === 'admin' || rol === 'mesero'
     .mt-8.card
@@ -93,7 +77,7 @@ block content
 
         if reserva.estado === 'en_curso'
           button.btn-success(onclick=`completar(${reserva.id})`) Completar
-          button.btn-warning(onclick=`marcarNoShow(${reserva.id})`) Marcar No-Show
+          button.btn-warning(onclick=`marcarNoShow(${reserva.id})`) No-Show
 
   script.
     async function confirmar(id) {
@@ -101,7 +85,8 @@ block content
         const res = await fetch(`/reservas/${id}/confirmar`, { method: 'POST' });
         const data = await res.json();
         if (data.success) location.reload();
-      } catch (e) {
+        else alert(data.error || 'Error');
+      } catch {
         alert('Error al confirmar reserva');
       }
     }
@@ -118,7 +103,8 @@ block content
         });
         const data = await res.json();
         if (data.success) location.reload();
-      } catch (e) {
+        else alert(data.error || 'Error');
+      } catch {
         alert('Error al cancelar reserva');
       }
     }
@@ -128,8 +114,8 @@ block content
         const res = await fetch(`/reservas/${id}/en-curso`, { method: 'POST' });
         const data = await res.json();
         if (data.success) location.reload();
-      } catch (e) {
-        alert('Error al actualizar reserva');
+      } catch {
+        alert('Error al actualizar');
       }
     }
 
@@ -138,8 +124,8 @@ block content
         const res = await fetch(`/reservas/${id}/completar`, { method: 'POST' });
         const data = await res.json();
         if (data.success) location.reload();
-      } catch (e) {
-        alert('Error al completar reserva');
+      } catch {
+        alert('Error al completar');
       }
     }
 
@@ -150,7 +136,7 @@ block content
         const res = await fetch(`/reservas/${id}/no-show`, { method: 'POST' });
         const data = await res.json();
         if (data.success) location.reload();
-      } catch (e) {
+      } catch {
         alert('Error al marcar No-Show');
       }
     }

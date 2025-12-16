@@ -5,6 +5,7 @@ html(lang="es")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
     title= titulo
     link(rel="stylesheet" href="/css/style.css")
+
   body.bg-gray-100.min-h-screen.flex.items-center.justify-center
     .max-w-md.w-full.space-y-8.p-8
       .card
@@ -12,22 +13,41 @@ html(lang="es")
           h2.text-center.text-3xl.font-extrabold.text-gray-900 SaborGourmet
           p.mt-2.text-center.text-sm.text-gray-600 Sistema de Gestión de Reservas
         
+        // 🔴 MENSAJE DE ERROR
         if error
-          .mt-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded
+          .mt-4.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded.text-center
             p= error
         
-        form.mt-8.space-y-6(action="/auth/login" method="POST")
+        // 🔐 LOGIN FORM
+        form.mt-8.space-y-6(
+          action="/auth/login"
+          method="POST"
+          autocomplete="off"
+        )
           .rounded-md.shadow-sm.space-y-4
             div
               label.label(for="email") Correo Electrónico
-              input#email.input-field(type="email" name="email" required placeholder="correo@ejemplo.com")
+              input#email.input-field(
+                type="email"
+                name="email"
+                required
+                placeholder="correo@ejemplo.com"
+                autocomplete="off"
+              )
             
             div
               label.label(for="password") Contraseña
-              input#password.input-field(type="password" name="password" required placeholder="••••••••")
+              input#password.input-field(
+                type="password"
+                name="password"
+                required
+                placeholder="••••••••"
+                autocomplete="new-password"
+              )
           
           div
             button.btn-primary.w-full(type="submit") Iniciar Sesión
           
           .text-center
-            a.text-sm.text-primary-600.hover_text-primary-500(href="/auth/registro") ¿No tienes cuenta? Regístrate
+            a.text-sm.text-primary-600.hover_text-primary-500(href="/auth/registro")
+              | ¿No tienes cuenta? Regístrate
