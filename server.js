@@ -107,8 +107,12 @@ app.use((err, req, res, next) => {
 // ===============================
 const iniciarServidor = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Conectado a la base de datos');
+    if (typeof sequelize.testConnection === 'function') {
+      await sequelize.testConnection();
+    } else {
+      await sequelize.authenticate();
+      console.log('✅ Conectado a la base de datos');
+    }
 
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: false });
@@ -119,7 +123,7 @@ const iniciarServidor = async () => {
     });
 
   } catch (error) {
-    console.error('❌ Error al iniciar:', error);
+    console.error('❌ Error al iniciar:', error.message || error);
     process.exit(1);
   }
 };
